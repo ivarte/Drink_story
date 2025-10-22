@@ -5,24 +5,29 @@ workflows:
     environment:
       flutter: stable
       vars:
-        ROUTE_ID: "riga_cocktail_v1"        # можно переопределить в UI переменными окружения
-      groups:
-        - android_keystore                  # создадим эту группу секретов в UI
+        ROUTE_ID: riga_cocktail_v1
     scripts:
-      - echo "→ cd drink_story"
       - cd drink_story
-      # Подготовка keystore из переменных окружения (см. шаг 3)
-      - |
-        echo "→ write android keystore & key.properties"
-        echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
-        cat > android/key.properties <<EOF
-        storePassword=$KEYSTORE_PASSWORD
-        keyPassword=$KEY_PASSWORD
-        keyAlias=$KEY_ALIAS
-        storeFile=app/keystore.jks
-        EOF
+      - flutter --version
       - flutter pub get
-      - flutter build appbundle --release \
+      # Подготовка keystore из переменных окружения приложения
+      - |
+        echo "→ prepare Android keystore (if present)"
+        if [ -n "$ANDROID_KEYSTORE_B64" ]; then
+          mkdir -p android/app
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
+          cat > android/key.properties <<EOF
+storePassword=$KEYSTORE_PASSWORD
+keyPassword=$KEY_PASSWORD
+keyAlias=$KEY_ALIAS
+storeFile=app/keystore.jks
+EOF
+        else
+          echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
+        fi
+      - |
+        set -e
+        flutter build appbundle --release \
           --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
           --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
           --dart-define=ROUTE_ID=$ROUTE_ID \
@@ -39,24 +44,18 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        ROUTE_ID: "riga_cocktail_v1"
-      groups:
-        - app_store_connect                 # создадим группу секретов в UI
+        ROUTE_ID: riga_cocktail_v1
     scripts:
-      - echo "→ cd drink_story"
       - cd drink_story
+      - flutter --version
       - flutter pub get
-      - flutter build ipa --release \
+      - |
+        set -e
+        flutter build ipa --release \
           --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
           --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
           --dart-define=ROUTE_ID=$ROUTE_ID \
           ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/ios/ipa/*.ipa
-    # Публикацию можно включить позже, когда добавите ключи App Store Connect в UI:
-    # publishing:
-    #   app_store_connect:
-    #     api_key: $APPSTORE_API_KEY_P8
-    #     key_id: $APPSTORE_KEY_ID
-    #     issuer_id: $APPSTORE_ISSUER_ID
-    #     submit_to_testflight: true
+    # publishing можно включить позже, когда добавите iOS-секреты на уровне приложения
