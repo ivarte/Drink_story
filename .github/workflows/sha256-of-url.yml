@@ -1,0 +1,30 @@
+name: SHA256 of URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Direct download URL to route.zip
+        required: true
+        default: https://github.com/ivarte/Drink_story/releases/download/v0.2.0/route.zip
+
+jobs:
+  hash:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        run: |
+          curl -L -o route.zip '${{ github.event.inputs.url }}'
+          ls -lh route.zip
+      - name: SHA256
+        id: sha
+        run: |
+          SHA=$(sha256sum route.zip | awk '{print $1}')
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "### SHA256" >> $GITHUB_STEP_SUMMARY
+          echo "\`$SHA\`" >> $GITHUB_STEP_SUMMARY
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-zip
+          path: route.zip
