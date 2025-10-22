@@ -10,18 +10,15 @@ workflows:
       - cd drink_story
       - flutter --version
       - flutter pub get
-      # Подготовка keystore из переменных окружения приложения
       - |
+        set -e
         echo "→ prepare Android keystore (if present)"
         if [ -n "$ANDROID_KEYSTORE_B64" ]; then
           mkdir -p android/app
           echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
-          cat > android/key.properties <<EOF
-storePassword=$KEYSTORE_PASSWORD
-keyPassword=$KEY_PASSWORD
-keyAlias=$KEY_ALIAS
-storeFile=app/keystore.jks
-EOF
+          # создаём key.properties без heredoc, чтобы не ломать YAML
+          printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=app/keystore.jks\n" \
+            "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
         else
           echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
         fi
@@ -58,4 +55,3 @@ EOF
           ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/ios/ipa/*.ipa
-    # publishing можно включить позже, когда добавите iOS-секреты на уровне приложения
