@@ -1,0 +1,62 @@
+workflows:
+  android_aab:
+    name: Android AAB
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      vars:
+        ROUTE_ID: "riga_cocktail_v1"        # можно переопределить в UI переменными окружения
+      groups:
+        - android_keystore                  # создадим эту группу секретов в UI
+    scripts:
+      - echo "→ cd drink_story"
+      - cd drink_story
+      # Подготовка keystore из переменных окружения (см. шаг 3)
+      - |
+        echo "→ write android keystore & key.properties"
+        echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
+        cat > android/key.properties <<EOF
+        storePassword=$KEYSTORE_PASSWORD
+        keyPassword=$KEY_PASSWORD
+        keyAlias=$KEY_ALIAS
+        storeFile=app/keystore.jks
+        EOF
+      - flutter pub get
+      - flutter build appbundle --release \
+          --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
+          --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
+          --dart-define=ROUTE_ID=$ROUTE_ID \
+          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+    artifacts:
+      - drink_story/build/app/outputs/bundle/release/*.aab
+
+  ios_testflight:
+    name: iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        ROUTE_ID: "riga_cocktail_v1"
+      groups:
+        - app_store_connect                 # создадим группу секретов в UI
+    scripts:
+      - echo "→ cd drink_story"
+      - cd drink_story
+      - flutter pub get
+      - flutter build ipa --release \
+          --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
+          --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
+          --dart-define=ROUTE_ID=$ROUTE_ID \
+          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+    artifacts:
+      - drink_story/build/ios/ipa/*.ipa
+    # Публикацию можно включить позже, когда добавите ключи App Store Connect в UI:
+    # publishing:
+    #   app_store_connect:
+    #     api_key: $APPSTORE_API_KEY_P8
+    #     key_id: $APPSTORE_KEY_ID
+    #     issuer_id: $APPSTORE_ISSUER_ID
+    #     submit_to_testflight: true
