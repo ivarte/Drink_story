@@ -55,3 +55,25 @@ workflows:
           ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/ios/ipa/*.ipa
+
+  android_apk_debug:
+    name: Android APK (debug) for IAS
+    max_build_duration: 30
+    environment:
+      flutter: stable
+      vars:
+        ROUTE_ID: riga_cocktail_v1
+    scripts:
+      - |
+        set -e
+        cd drink_story
+        flutter --version
+        flutter pub get
+        # Собираем debug-APK; при необходимости пробрасываем dart-define для DEMO
+        flutter build apk --debug \
+          --dart-define=DEMO_PACKAGE_URL=${DEMO_PACKAGE_URL:-https://github.com/ivarte/Drink_story/releases/download/v0.1.0/route.zip} \
+          --dart-define=DEMO_PACKAGE_SHA256=${DEMO_PACKAGE_SHA256:-4220da9f8429b66fb489ee6ce03b28f4551119acbe91cbb4faede44bd8133b1d} \
+          --dart-define=ROUTE_ID=$ROUTE_ID \
+          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+    artifacts:
+      - drink_story/build/app/outputs/flutter-apk/app-debug.apk
