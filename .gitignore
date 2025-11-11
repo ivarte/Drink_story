@@ -2,3 +2,5 @@ web/route.zip
 *.zip
 *.m4a
 scenes/
+drink_story/android/key.properties
+drink_story/android/app/keystore.jks
