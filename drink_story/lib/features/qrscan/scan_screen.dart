@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/qr_validator.dart';
 import '../../core/config.dart';
+import '../../screens/qr_web_page.dart'; // <- добавили
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -14,6 +15,7 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   final _validator = QrValidator();
   bool _ready = false;
+  bool _handling = false; // <- защита от повторных срабатываний
 
   @override
   void initState() {
@@ -25,29 +27,46 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext _) {
-    // не используем параметр build-метода `context` в async-колбэках
     return Scaffold(
       appBar: AppBar(title: const Text('Сканируйте QR в баре')),
       body: _ready
-          ? MobileScanner(onDetect: (capture) async {
-              final raw = capture.barcodes.first.rawValue ?? '';
+          ? MobileScanner(
+              onDetect: (capture) async {
+                if (_handling) return;
+                _handling = true;
+                try {
+                  final raw = capture.barcodes.first.rawValue ?? '';
 
-              // валидация подписи; DEV-фоллбек — принимать сырую строку
-              final validated = await _validator
-                  .validateAndGetSceneId(raw, AppConfig.routeId);
-              final sceneId = validated ?? raw;
+                  // 1) Если это URL — открываем во встроенном WebView (автоплей разрешён)
+                  final uri = Uri.tryParse(raw);
+                  final isHttp = uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+                  if (isHttp) {
+                    if (!mounted) return;
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => QrWebPage(url: uri!.toString())),
+                    );
+                    return; // после возврата можно снова сканировать
+                  }
 
-              if (!mounted) return; // обязательно перед использованием context
+                  // 2) Иначе — как раньше: валидируем и ведём в плеер по sceneId
+                  final validated =
+                      await _validator.validateAndGetSceneId(raw, AppConfig.routeId);
+                  final sceneId = validated ?? raw;
 
-              if (sceneId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Неверный QR')),
-                );
-                return;
-              }
+                  if (!mounted) return;
+                  if (sceneId.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Неверный QR')),
+                    );
+                    return;
+                  }
 
-              GoRouter.of(context).go('/player/$sceneId');
-            })
+                  GoRouter.of(context).go('/player/$sceneId');
+                } finally {
+                  _handling = false;
+                }
+              },
+            )
           : const Center(child: CircularProgressIndicator()),
     );
   }

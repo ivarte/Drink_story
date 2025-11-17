@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// Импорты экранов
+// Экраны приложения
 import 'features/route/route_screen.dart';
 import 'features/activation/activation_screen.dart';
 import 'features/qrscan/scan_screen.dart';
-import 'features/player/player_screen.dart';
 import 'features/faq/faq_screen.dart';
+
+// Экран с WebView (файл: lib/screens/qr_web_page.dart)
+import 'screens/qr_web_page.dart';
+
+/// Базовый адрес, где лежат ваши веб-сцены (GitHub Pages / другой хостинг).
+/// ОБЯЗАТЕЛЬНО поправьте при необходимости.
+const String kWebBase = 'https://ivarte.github.io/Drink_story';
+
+/// Как формируется ссылка на страницу сцены.
+/// Если ваши сцены лежат иначе — измените шаблон (например, '/scenes/$id/').
+String _sceneUrl(String sceneId) => '$kWebBase/$sceneId/index.html';
 
 void main() => runApp(const DrinkStoryApp());
 
@@ -15,16 +25,25 @@ class DrinkStoryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final router = GoRouter(routes: [
-      GoRoute(path: '/', builder: (_, __) => const RouteScreen()),
-      GoRoute(path: '/activate', builder: (_, __) => const ActivateScreen()),
-      GoRoute(path: '/scan', builder: (_, __) => const ScanScreen()),
-      GoRoute(
-        path: '/player/:sceneId',
-        builder: (_, s) => PlayerScreen(sceneId: s.pathParameters['sceneId']!),
-      ),
-      GoRoute(path: '/faq', builder: (_, __) => const FaqScreen()),
-    ]);
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, __) => const RouteScreen()),
+        GoRoute(path: '/activate', builder: (_, __) => const ActivateScreen()),
+        GoRoute(path: '/scan', builder: (_, __) => const ScanScreen()),
+
+        // При переходе вида /player/<sceneId> открываем WebView с нужным URL
+        GoRoute(
+          path: '/player/:sceneId',
+          builder: (_, state) {
+            final sceneId = state.pathParameters['sceneId']!;
+            final url = _sceneUrl(sceneId);
+            return QrWebPage(url: url);
+          },
+        ),
+
+        GoRoute(path: '/faq', builder: (_, __) => const FaqScreen()),
+      ],
+    );
 
     return MaterialApp.router(
       routerConfig: router,

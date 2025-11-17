@@ -1,4 +1,4 @@
-package com.ivarte.drinkstory
+package com.ivarte.storystroll
 
 import io.flutter.embedding.android.FlutterActivity
 
