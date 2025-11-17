@@ -16,14 +16,14 @@ workflows:
         flutter pub get
 
         echo "→ prepare Android keystore (if present)"
-        if [ -n "$ANDROID_KEYSTORE_B64" ]; then
-          mkdir -p android/app
-          echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
-          printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=app/keystore.jks\n" \
-            "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
-        else
-          echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
-        fi
+if [ -n "$ANDROID_KEYSTORE_B64" ]; then
+  mkdir -p android/app
+  echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
+  printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=keystore.jks\n" \
+    "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+else
+  echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
+fi
 
         flutter build appbundle --release \
           --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
