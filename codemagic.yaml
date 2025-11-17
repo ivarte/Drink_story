@@ -7,29 +7,29 @@ workflows:
       vars:
         ROUTE_ID: riga_cocktail_v1
       groups:
-        - android_sign   # имя env-группы в Codemagic с ANDROID_KEYSTORE_B64 и паролями
+        - android_sign   # env-group в Codemagic с ANDROID_KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_PASSWORD, KEY_ALIAS
     scripts:
       - |
-        set -e
-        cd drink_story
-        flutter --version
-        flutter pub get
+          set -e
+          cd drink_story
+          flutter --version
+          flutter pub get
 
-        echo "→ prepare Android keystore (if present)"
-if [ -n "$ANDROID_KEYSTORE_B64" ]; then
-  mkdir -p android/app
-  echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
-  printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=keystore.jks\n" \
-    "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
-else
-  echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
-fi
+          echo "→ prepare Android keystore (if present)"
+          if [ -n "$ANDROID_KEYSTORE_B64" ]; then
+            mkdir -p android/app
+            echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
+            printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=keystore.jks\n" \
+              "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+          else
+            echo "WARN: ANDROID_KEYSTORE_B64 is empty — release may be unsigned"
+          fi
 
-        flutter build appbundle --release \
-          --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
-          --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
-          --dart-define=ROUTE_ID=$ROUTE_ID \
-          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+          flutter build appbundle --release \
+            --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
+            --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
+            --dart-define=ROUTE_ID=$ROUTE_ID \
+            ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/app/outputs/bundle/release/*.aab
 
@@ -45,16 +45,16 @@ fi
         ROUTE_ID: riga_cocktail_v1
     scripts:
       - |
-        set -e
-        cd drink_story
-        flutter --version
-        flutter pub get
+          set -e
+          cd drink_story
+          flutter --version
+          flutter pub get
 
-        flutter build ipa --release \
-          --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
-          --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
-          --dart-define=ROUTE_ID=$ROUTE_ID \
-          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+          flutter build ipa --release \
+            --dart-define=DEMO_PACKAGE_URL=$DEMO_PACKAGE_URL \
+            --dart-define=DEMO_PACKAGE_SHA256=$DEMO_PACKAGE_SHA256 \
+            --dart-define=ROUTE_ID=$ROUTE_ID \
+            ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/ios/ipa/*.ipa
 
@@ -67,15 +67,15 @@ fi
         ROUTE_ID: riga_cocktail_v1
     scripts:
       - |
-        set -e
-        cd drink_story
-        flutter --version
-        flutter pub get
-        # Собираем debug-APK; при необходимости пробрасываем dart-define для DEMO
-        flutter build apk --debug \
-          --dart-define=DEMO_PACKAGE_URL=${DEMO_PACKAGE_URL:-https://github.com/ivarte/Drink_story/releases/download/v0.1.0/route.zip} \
-          --dart-define=DEMO_PACKAGE_SHA256=${DEMO_PACKAGE_SHA256:-4220da9f8429b66fb489ee6ce03b28f4551119acbe91cbb4faede44bd8133b1d} \
-          --dart-define=ROUTE_ID=$ROUTE_ID \
-          ${API_BASE:+--dart-define=API_BASE=$API_BASE}
+          set -e
+          cd drink_story
+          flutter --version
+          flutter pub get
+          # Собираем debug-APK; при необходимости пробрасываем dart-define для DEMO
+          flutter build apk --debug \
+            --dart-define=DEMO_PACKAGE_URL=${DEMO_PACKAGE_URL:-https://github.com/ivarte/Drink_story/releases/download/v0.1.0/route.zip} \
+            --dart-define=DEMO_PACKAGE_SHA256=${DEMO_PACKAGE_SHA256:-4220da9f8429b66fb489ee6ce03b28f4551119acbe91cbb4faede44bd8133b1d} \
+            --dart-define=ROUTE_ID=$ROUTE_ID \
+            ${API_BASE:+--dart-define=API_BASE=$API_BASE}
     artifacts:
       - drink_story/build/app/outputs/flutter-apk/app-debug.apk
