@@ -59,3 +59,23 @@ android {
 flutter {
     source = "../.."
 }
+
+// Post-bundle task: copy app-release.aab to project-level build/app/outputs/bundle/release/
+// so that Flutter tool can find it in the expected location
+afterEvaluate {
+    val bundleRelease = tasks.named("bundleRelease")
+    val copyTask = tasks.register("copyReleaseBundleToProjectBuild") {
+        doLast {
+            val srcFile = file("${buildDir}/outputs/bundle/release/app-release.aab")
+            val destDir = file("../../build/app/outputs/bundle/release")
+            if (srcFile.exists()) {
+                destDir.mkdirs()
+                srcFile.copyTo(File(destDir, "app-release.aab"), overwrite = true)
+                println("Copied AAB to: ${destDir.absolutePath}/app-release.aab")
+            } else {
+                println("Warning: source AAB not found at ${srcFile.absolutePath}")
+            }
+        }
+    }
+    bundleRelease.get().finalizedBy(copyTask)
+}
