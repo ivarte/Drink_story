@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ivarte.storystroll"
+    namespace = "com.ivarte.storystroll2"
 
     // Требуют плагины (mobile_scanner, path_provider_android и др.)
     compileSdk = 36
@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.ivarte.storystroll"
+        applicationId = "com.ivarte.storystroll2"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
