@@ -43,7 +43,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   if (isHttp) {
                     if (!mounted) return;
                     await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => QrWebPage(url: uri!.toString())),
+                      MaterialPageRoute(builder: (_) => QrWebPage(url: uri.toString())),
                     );
                     return; // после возврата можно снова сканировать
                   }

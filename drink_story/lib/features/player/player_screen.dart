@@ -36,13 +36,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
     try {
       await _pc.playSceneId(widget.sceneId);
     } catch (e) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _error = e.toString();
       });
+      }
     } finally {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _loading = false;
       });
+      }
     }
   }
 

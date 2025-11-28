@@ -12,6 +12,8 @@ workflows:
       - |
           set -e
           cd drink_story
+          echo "Pubspec version:"
+          grep "^version:" pubspec.yaml
           flutter --version
           flutter pub get
 

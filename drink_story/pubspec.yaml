@@ -1,9 +1,10 @@
 name: drink_story
-description: "A new Flutter project."
-publish_to: 'none'
+description: Drink Story mobile app
+publish_to: "none"
+
 
 # Поднимите build number, если предыдущий уже загружен в Play Console
-version: 1.0.1+7
+version: 1.0.1+9
 
 environment:
   sdk: ^3.9.2
