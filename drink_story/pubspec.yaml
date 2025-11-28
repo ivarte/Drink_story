@@ -4,7 +4,7 @@ publish_to: "none"
 
 
 # Поднимите build number, если предыдущий уже загружен в Play Console
-version: 1.0.1+9
+version: 1.0.1+10
 
 environment:
   sdk: ^3.9.2
