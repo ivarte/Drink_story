@@ -1,4 +1,4 @@
-package com.ivarte.storystroll
+package com.ivarte.storystroll2
 
 import io.flutter.embedding.android.FlutterActivity
 
