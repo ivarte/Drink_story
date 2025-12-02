@@ -1,6 +1,5 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -19,32 +18,23 @@ class _QrWebPageState extends State<QrWebPage> {
   @override
   void initState() {
     super.initState();
-    
-    // Log which URL we're loading
-    if (kIsWeb) {
-      // ignore: avoid_print
-      print('🎬 QrWebPage: Loading URL: ${widget.url}');
-      // On web, we can't use WebViewController with platform-specific setup
-      // Just create a basic controller (WebViewWidget won't actually render on web anyway)
-      _controller = WebViewController();
-    } else {
-      // iOS: создать контроллер с параметрами, разрешающими автоплей
-      if (Platform.isIOS) {
-        final params = WebKitWebViewControllerCreationParams(
-          allowsInlineMediaPlayback: true,
-          mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
-        );
-        _controller = WebViewController.fromPlatformCreationParams(params);
-      } else {
-        _controller = WebViewController();
-      }
 
-      // Android: разрешить воспроизведение без жеста пользователя
-      if (_controller.platform is AndroidWebViewController) {
-        final androidCtrl = _controller.platform as AndroidWebViewController;
-        AndroidWebViewController.enableDebugging(false);
-        androidCtrl.setMediaPlaybackRequiresUserGesture(false);
-      }
+    // iOS: создать контроллер с параметрами, разрешающими автоплей
+    if (Platform.isIOS) {
+      final params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+      _controller = WebViewController.fromPlatformCreationParams(params);
+    } else {
+      _controller = WebViewController();
+    }
+
+    // Android: разрешить воспроизведение без жеста пользователя
+    if (_controller.platform is AndroidWebViewController) {
+      final androidCtrl = _controller.platform as AndroidWebViewController;
+      AndroidWebViewController.enableDebugging(false);
+      androidCtrl.setMediaPlaybackRequiresUserGesture(false);
     }
 
     _controller

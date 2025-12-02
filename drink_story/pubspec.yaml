@@ -3,7 +3,7 @@ description: Drink Story mobile app
 publish_to: "none"
 
 # Поднимите build number, если предыдущий уже загружен в Play Console
-version: 1.0.1+11
+version: 1.0.1+12
 
 environment:
   sdk: ^3.9.2
