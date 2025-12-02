@@ -1,70 +1,60 @@
+// android/app/build.gradle.kts
 
-import java.io.File
 import java.util.Properties
+import java.io.FileInputStream
+import java.io.File
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
-}
-
-val keystoreProperties = Properties().apply {
-    val keystorePropertiesFile = rootProject.file("key.properties")
-    if (keystorePropertiesFile.exists()) {
-        keystorePropertiesFile.inputStream().use { load(it) }
-    }
 }
 
 android {
     namespace = "com.ivarte.storystroll2"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+
+    // Требуют плагины (mobile_scanner, path_provider_android и др.)
+    compileSdk = 36
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
 
     defaultConfig {
         applicationId = "com.ivarte.storystroll2"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
+
+        // Берём версию из pubspec.yaml
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     signingConfigs {
         create("release") {
-            val storeFilePath = keystoreProperties["storeFile"] as String?
-            // Use Gradle's file(...) so relative paths are resolved against the module
-            // project directory (android/app) rather than the Gradle daemon working dir.
-            storeFilePath?.let { storeFile = file(it) }
+            // key.properties лежит в android/key.properties
+            val keystoreFile = rootProject.file("key.properties")
+            require(keystoreFile.exists()) { "key.properties not found at android/key.properties" }
 
-            storePassword = keystoreProperties["storePassword"] as String?
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
+            val p = Properties().apply { load(FileInputStream(keystoreFile)) }
+            storeFile = file(p["storeFile"]!!.toString())   // например, app/upload-keystore.jks
+            storePassword = p["storePassword"]?.toString()
+            keyAlias = p["keyAlias"]?.toString()
+            keyPassword = p["keyPassword"]?.toString()
         }
     }
 
     buildTypes {
-        getByName("debug") {
-            // если не нужно подписывать debug тем же ключом — можно убрать эту строку
-            signingConfig = signingConfigs.getByName("release")
-        }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            signingConfig = signingConfigs.getByName("release")
         }
-    }
-
-    // ВЫРАВНИВАЕМ JVM: и Java, и Kotlin — на 17
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
+        getByName("debug") { }
     }
 }
 
@@ -72,26 +62,21 @@ flutter {
     source = "../.."
 }
 
-// Ensure Flutter tooling can find the AAB where it expects it.
-// Gradle produces the bundle under `android/app/build/outputs/...`,
-// but Flutter sometimes looks for `build/app/outputs/...` at the Flutter project root.
-// Add a small Copy task that runs after `bundleRelease` to place a copy
-// at the Flutter-expected location so `flutter build appbundle` exits 0.
-tasks.register<org.gradle.api.tasks.Copy>("copyBundleToFlutter") {
-    val src = file("$buildDir/outputs/bundle/release/app-release.aab")
-    // rootProject here refers to the Android Gradle root (android/). The Flutter
-    // project root is the parent of that directory, so use `project.rootDir.parentFile`
-    // to target the Flutter `build/` folder where the Flutter tooling looks.
-    val flutterRoot = project.rootDir.parentFile
-    val destDir = file("${flutterRoot.absolutePath}/build/app/outputs/bundle/release")
-    from(src)
-    into(destDir)
-    doFirst {
-        println("[copyBundleToFlutter] src=$src, dest=$destDir")
-    }
+// ==== Копирование .aab туда, где его ждёт flutter ====
+
+// Корень Flutter-проекта (папка drink_story)
+val flutterProjectRoot = rootProject.projectDir.parentFile!!
+
+// Задача: скопировать .aab из android/app/build/... в build/app/...
+val copyBundleToFlutter by tasks.register<Copy>("copyBundleToFlutter") {
+    from("$buildDir/outputs/bundle/release")
+    include("*.aab")
+    into(File(flutterProjectRoot, "build/app/outputs/bundle/release"))
 }
 
-// Run the copy after the bundle is produced.
-tasks.matching { it.name == "bundleRelease" }.configureEach {
-    finalizedBy("copyBundleToFlutter")
+// Когда Gradle создаст задачу signReleaseBundle, подвешиваем к ней copyBundleToFlutter
+tasks.whenTaskAdded {
+    if (name == "signReleaseBundle") {
+        finalizedBy(copyBundleToFlutter)
+    }
 }
