@@ -16,7 +16,7 @@ const String kWebBase = 'https://ivarte.github.io/Drink_story';
 
 /// Как формируется ссылка на страницу сцены.
 /// Если ваши сцены лежат иначе — измените шаблон (например, '/scenes/$id/').
-String _sceneUrl(String sceneId) => '$kWebBase/$sceneId/index.html';
+String _sceneUrl(String sceneId) => '$kWebBase/scenes/$sceneId.m4a';
 
 void main() => runApp(const DrinkStoryApp());
 
@@ -52,3 +52,5 @@ class DrinkStoryApp extends StatelessWidget {
     );
   }
 }
+
+

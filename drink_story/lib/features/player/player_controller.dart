@@ -8,7 +8,7 @@ class PlayerController {
 
   Future<void> playSceneId(String sceneId) async {
     if (kIsWeb) {
-      await _p.setUrl('/scenes/$sceneId.m4a'); // web: раздаём из /web/scenes/
+      await _p.setUrl('scenes/$sceneId.m4a'); // web: раздаём из /web/scenes/ это относительный путь, чтобы работать и на GitHub Pages, и в Codespaces
     } else {
       final m = await AppStorage.loadManifest();
       final rel = m?.byId(sceneId)?.file ?? 'scenes/$sceneId.m4a'; // fallback
